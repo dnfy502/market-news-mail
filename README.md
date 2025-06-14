@@ -16,7 +16,7 @@ This automated system monitors NSE RSS feeds 24/7, instantly identifies new awar
 **What You Get:**
 - Instant email alerts when relevant announcements are published
 - AI-powered summaries extracting key information (order value, client, timeline)
-- Current stock price and financial metrics
+- Company financial context (previous year's revenue, current order book size)
 - Direct links to original PDF documents
 - No more manual browsing through hundreds of announcements
 
@@ -24,23 +24,15 @@ This automated system monitors NSE RSS feeds 24/7, instantly identifies new awar
 
 ```mermaid
 graph TD
-    A["NSE RSS Feed<br/>Company Announcements"] --> B["RSS Fetcher<br/>Fetches every 15 minutes"]
-    B --> C["Filter Engine<br/>Searches for awards/contracts/bagging"]
-    C --> D["Hash Database Manager<br/>Check for duplicates"]
-    D --> E{New Articles<br/>Found?}
-    E -->|No| F["Wait for next cycle"]
-    E -->|Yes| G["PDF Text Extractor<br/>Download and extract PDF content"]
-    G --> H["Google Gemini AI<br/>Generate intelligent summaries"]
-    H --> I["Financial Data Tool<br/>Fetch current stock prices"]
-    I --> J["Email Sender<br/>Create HTML email with summaries"]
-    J --> K["Mark Articles as Processed"]
-    K --> L["Email Alert Sent<br/>User receives notification"]
-    F --> B
-    
-    M["SQLite Database<br/>Store all articles"] --> C
-    B --> M
-    N["Hash Database<br/>Track processed articles"] --> D
-    K --> N
+    A["NSE RSS Feed"] --> B["Filter for Awards/Contracts"]
+    B --> C{New Articles?}
+    C -->|No| D["Wait 15 minutes"]
+    C -->|Yes| E["Extract PDF Text"]
+    E --> F["AI Summary with Gemini"]
+    F --> G["Get Company Financials<br/>(Revenue & Order Book)"]
+    G --> H["Send Email Alert"]
+    H --> I["Mark as Processed"]
+    D --> A
 ```
 
 ## Key Features
@@ -48,7 +40,7 @@ graph TD
 - **Automated Monitoring**: Checks NSE announcements every 15 minutes
 - **Smart Filtering**: Identifies awards, bagging, and contract announcements using keyword matching
 - **AI-Powered Summaries**: Uses Google Gemini AI to summarize PDF documents with key details like order value, client, and expiry
-- **Financial Data Integration**: Fetches current stock prices and financial metrics
+- **Financial Context**: Uses Gemini with search grounding to find company revenue and order book data
 - **Email Alerts**: Sends formatted HTML email notifications with summaries and clickable links
 - **Duplicate Prevention**: Tracks processed articles to avoid repeat notifications
 - **Robust Error Handling**: Comprehensive logging and error recovery mechanisms
@@ -203,260 +195,21 @@ email_system/
 
 ## Configuration
 
-### RSS Feed Settings
-
-Edit `config.py` to customize:
-
-```python
-RSS_CONFIG = {
-    "url": "http://nsearchives.nseindia.com/content/RSS/Online_announcements.xml",
-    "timeout": 30,
-    # Custom headers for reliable access
-}
-
-SCHEDULER_CONFIG = {
-    "fetch_interval_minutes": 15,  # How often to check
-    "max_workers": 4,
-    "batch_size": 1000,
-}
-```
-
-### Filter Customization
-
-Modify the filtering logic in `filter_engine.py`:
-
-```python
-DEFAULT_FILTERS = {
-    "keywords": ["award", "bagging", "contract"],
-    "default_filter": "Awards/Bagging",
-    "date_range_days": 7,
-    "max_results": 100,
-}
-```
-
-### Email Templates
-
-Customize email appearance in `email_sender.py` - modify HTML templates and styling.
-
-## Features in Detail
-
-### 1. RSS Feed Processing
-- Fetches announcements from NSE RSS feed
-- Handles connection timeouts and retries
-- Stores articles in SQLite database
-- Tracks processing statistics
-
-### 2. Smart Filtering
-- **Keyword Matching**: Searches for "award", "bagging", "contract" etc.
-- **Company Name Extraction**: Identifies company names from titles
-- **Date Range Filtering**: Configurable time windows
-- **Preset Filters**: Pre-configured filter sets for different use cases
-
-### 3. AI-Powered PDF Summarization
-- Automatically detects PDF links in announcements
-- Downloads and extracts text from PDFs
-- Uses Google Gemini AI for intelligent summarization
-- Formats summaries for email display
-- Handles large documents with smart truncation
-
-### 4. Financial Data Integration
-- Fetches current stock prices
-- Gets financial metrics and ratios
-- Integrates with financial data APIs
-- Handles rate limiting and errors gracefully
-
-### 5. Email Notifications
-- Beautiful HTML email formatting
-- Company-specific alerts with clickable buttons
-- PDF summaries embedded in emails
-- Support for multiple email providers
-- Attachment support for detailed reports
-
-### 6. Database Management
-- **Main Database**: Stores all RSS articles with full metadata
-- **Hash Database**: Tracks processed articles to prevent duplicates
-- **Automatic Cleanup**: Removes old data to prevent database bloat
-- **Error Recovery**: Handles database locks and corruption
+You can customize the system by editing `config.py`:
+- Change RSS feed URL and timeout settings
+- Modify filter keywords (default: "award", "bagging", "contract")
+- Adjust email template styling
 
 ## Troubleshooting
 
-### Common Issues
+**Common Issues:**
+- **Email errors**: Use app-specific passwords for Gmail, verify EMAIL_PROVIDER setting
+- **RSS feed issues**: Check internet connection, NSE feed may be temporarily down
+- **Gemini API errors**: Verify GEMINI_API_KEY in .env file, check API quota
+- **Database locked**: Stop all running instances, check file permissions
 
-#### 1. Email Authentication Errors
-```
-Error: Authentication failed
-```
-
-**Solutions:**
-- Verify email and password in `.env` file
-- For Gmail: Use App-Specific Password, not regular password
-- Check if 2FA is enabled and configured correctly
-- Verify EMAIL_PROVIDER setting matches your email service
-
-#### 2. RSS Feed Access Issues
-```
-Error: Failed to fetch RSS feed
-```
-
-**Solutions:**
-- Check internet connection
-- NSE RSS feed might be temporarily unavailable
-- Verify RSS URL in `config.py`
-- Check firewall settings
-
-#### 3. Gemini API Errors
-```
-Error: Gemini API authentication failed
-```
-
-**Solutions:**
-- Verify `GEMINI_API_KEY` in `.env` file
-- Check API key permissions
-- Ensure API quota is not exceeded
-- Try regenerating the API key
-
-#### 4. PDF Processing Issues
-```
-Failed to generate Gemini summary for PDF
-```
-
-**Solutions:**
-- PDF might be password-protected or corrupted
-- Large PDFs might timeout - system handles this gracefully
-- Check network connectivity for PDF downloads
-
-#### 5. Database Errors
-```
-Database locked error
-```
-
-**Solutions:**
-- Multiple instances might be running - stop all instances
-- Database file might be corrupted - delete and restart
-- Check file permissions in `data/` directory
-
-### Log Files
-
-Check log files for detailed error information:
-- `scheduler.log` - Scheduler-specific logs
-- `rss_system.log` - General system logs
-- Console output for real-time monitoring
-
-### Debugging Mode
-
-Enable verbose logging by modifying `config.py`:
-
-```python
-LOGGING_CONFIG = {
-    "level": "DEBUG",  # Change from "INFO" to "DEBUG"
-    # ... other settings
-}
-```
-
-## Security Considerations
-
-1. **Environment Variables**: Never commit `.env` file to version control
-2. **App Passwords**: Use app-specific passwords instead of main passwords
-3. **API Keys**: Rotate API keys regularly
-4. **Database**: Secure database files with appropriate permissions
-5. **Network**: Consider running behind a firewall for production use
-
-## Production Deployment
-
-### Using systemd (Linux)
-
-Create a service file `/etc/systemd/system/rss-processor.service`:
-
-```ini
-[Unit]
-Description=RSS Awards Processor
-After=network.target
-
-[Service]
-Type=simple
-User=your-username
-WorkingDirectory=/path/to/email_system
-ExecStart=/path/to/email_system/market_env/bin/python scheduler.py
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Enable and start:
-```bash
-sudo systemctl enable rss-processor
-sudo systemctl start rss-processor
-```
-
-### Using Docker
-
-Create a `Dockerfile`:
-
-```dockerfile
-FROM python:3.9-slim
-
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-
-COPY . .
-CMD ["python", "scheduler.py"]
-```
-
-Build and run:
-```bash
-docker build -t rss-processor .
-docker run -d --env-file .env rss-processor
-```
-
-## Performance Optimization
-
-### Database Optimization
-- Regular cleanup of old articles
-- Database indexing for faster queries
-- Batch processing for large datasets
-
-### Network Optimization
-- Connection pooling for RSS feeds
-- Retry logic with exponential backoff
-- Request rate limiting
-
-### Memory Management
-- Stream processing for large PDFs
-- Garbage collection for long-running processes
-- Memory monitoring and alerts
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/new-feature`)
-3. Commit changes (`git commit -am 'Add new feature'`)
-4. Push to the branch (`git push origin feature/new-feature`)
-5. Create a Pull Request
+Check log files (`scheduler.log`, console output) for detailed error information.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Support
-
-For issues and questions:
-1. Check the troubleshooting section above
-2. Review log files for error details
-3. Create an issue with detailed error information
-4. Include system information and configuration (excluding sensitive data)
-
-## Changelog
-
-### Version 1.0.0
-- Initial release with core RSS processing
-- Email notifications with PDF summaries
-- Automated scheduling
-- Financial data integration
-- Comprehensive error handling and logging
-
----
-
-**Made for automated financial news monitoring** 
+MIT License - see LICENSE file for details. 
