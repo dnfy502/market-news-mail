@@ -1,0 +1,23 @@
+# Core RSS and Web Processing
+feedparser>=6.0.10
+requests>=2.31.0
+
+# Database
+duckdb>=0.9.0
+
+# Scheduling
+APScheduler>=3.10.4
+
+# Environment Variables
+python-dotenv>=1.0.0
+
+# PDF Processing
+PyPDF2>=3.0.1
+
+# Google Gemini AI (for PDF summarization)
+google-genai>=0.7.0
+
+# Built-in libraries (no installation needed):
+# - smtplib, ssl, email (email sending)
+# - logging, datetime, typing, pathlib, os, sys, time, signal, re, hashlib, json, io, getpass
+# - dataclasses, enum (Python 3.7+) 
