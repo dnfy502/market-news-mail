@@ -1,26 +1,67 @@
 # NSE RSS Awards Processing System
 
-A comprehensive Python-based system that monitors NSE (National Stock Exchange) RSS feeds for company awards, bagging announcements, and contract wins. The system automatically processes new announcements, generates AI-powered summaries, fetches financial data, and sends email alerts.
+## The Problem This Solves
 
-## 🚀 Features
+When companies announce new orders, contracts, or awards, their stock prices often increase by 2-5% within the next 3 days. However, manually monitoring NSE announcements for these opportunities is time-consuming and inefficient. By the time you manually discover these announcements, the price movement may have already occurred.
 
-- **Automated RSS Monitoring**: Fetches NSE announcement feeds every 15 minutes
-- **Smart Filtering**: Identifies awards, bagging, and contract announcements using advanced filters
-- **AI-Powered Summaries**: Uses Google Gemini AI to summarize PDF documents
-- **Financial Data Integration**: Fetches stock prices and financial metrics
-- **Email Alerts**: Sends beautifully formatted HTML email notifications
-- **Duplicate Prevention**: Tracks processed articles to avoid duplicate notifications
-- **Robust Error Handling**: Comprehensive logging and error recovery
+**Real Examples:**
+- Company A announces Rs. 500 crore defense contract → Stock jumps 4% in 2 days
+- Company B bags Rs. 200 crore infrastructure order → Stock rises 3% overnight
+- Company C wins major export deal → Stock gains 6% in first trading session
+
+## The Solution
+
+This automated system monitors NSE RSS feeds 24/7, instantly identifies new awards/contracts/bagging announcements, and sends you email alerts with AI-generated summaries and current stock prices. This gives you a significant time advantage to make informed investment decisions.
+
+**What You Get:**
+- Instant email alerts when relevant announcements are published
+- AI-powered summaries extracting key information (order value, client, timeline)
+- Current stock price and financial metrics
+- Direct links to original PDF documents
+- No more manual browsing through hundreds of announcements
+
+## How It Works
+
+```mermaid
+graph TD
+    A["NSE RSS Feed<br/>Company Announcements"] --> B["RSS Fetcher<br/>Fetches every 15 minutes"]
+    B --> C["Filter Engine<br/>Searches for awards/contracts/bagging"]
+    C --> D["Hash Database Manager<br/>Check for duplicates"]
+    D --> E{New Articles<br/>Found?}
+    E -->|No| F["Wait for next cycle"]
+    E -->|Yes| G["PDF Text Extractor<br/>Download and extract PDF content"]
+    G --> H["Google Gemini AI<br/>Generate intelligent summaries"]
+    H --> I["Financial Data Tool<br/>Fetch current stock prices"]
+    I --> J["Email Sender<br/>Create HTML email with summaries"]
+    J --> K["Mark Articles as Processed"]
+    K --> L["Email Alert Sent<br/>User receives notification"]
+    F --> B
+    
+    M["SQLite Database<br/>Store all articles"] --> C
+    B --> M
+    N["Hash Database<br/>Track processed articles"] --> D
+    K --> N
+```
+
+## Key Features
+
+- **Automated Monitoring**: Checks NSE announcements every 15 minutes
+- **Smart Filtering**: Identifies awards, bagging, and contract announcements using keyword matching
+- **AI-Powered Summaries**: Uses Google Gemini AI to summarize PDF documents with key details like order value, client, and expiry
+- **Financial Data Integration**: Fetches current stock prices and financial metrics
+- **Email Alerts**: Sends formatted HTML email notifications with summaries and clickable links
+- **Duplicate Prevention**: Tracks processed articles to avoid repeat notifications
+- **Robust Error Handling**: Comprehensive logging and error recovery mechanisms
 - **Modular Architecture**: Clean, maintainable code with separate components
 
-## 📋 Prerequisites
+## Prerequisites
 
 - Python 3.8 or higher
 - Google Gemini API key (for PDF summarization)
 - Email account with SMTP access (Gmail, Outlook, Yahoo, or iCloud)
 - 2GB+ available disk space
 
-## 🛠️ Installation
+## Installation
 
 ### 1. Clone or Download the Project
 
@@ -81,25 +122,31 @@ FINANCIAL_API_KEY=your-financial-api-key
 2. Create a new API key
 3. Add it to your `.env` file as `GEMINI_API_KEY`
 
-## 🎯 Usage
+## Usage
 
-### Running the Scheduler (Recommended)
+### Quick Start (Recommended Approach)
 
-Start the automated scheduler that runs every 15 minutes:
+Once you've completed the installation and configuration, start the automated scheduler. This will run continuously and check for new announcements every 15 minutes:
 
 ```bash
 python scheduler.py
 ```
 
+**What happens next:**
+- The system immediately performs an initial check for new announcements
+- It then runs every 15 minutes automatically
+- When new awards/contracts are found, you'll receive email alerts within minutes
+- Each email contains AI-generated summaries with key details like order value, client, and timeline
+
 Output example:
 ```
 RSS Awards Processor Scheduler
 ==================================================
-🚀 Starting RSS Awards Processor Scheduler
-📅 Schedule: Every 15 minutes
-✅ Email configuration loaded successfully
-🔄 Running initial check...
-⏰ Scheduler is now running. Press Ctrl+C to stop.
+Starting RSS Awards Processor Scheduler
+Schedule: Every 15 minutes
+Email configuration loaded successfully
+Running initial check...
+Scheduler is now running. Press Ctrl+C to stop.
 ```
 
 ### Manual Execution
@@ -125,7 +172,7 @@ python email_sender.py
 python pdf_summarizer.py <pdf-url>
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 email_system/
@@ -154,7 +201,7 @@ email_system/
 └── __pycache__/               # Python cache (auto-generated)
 ```
 
-## ⚙️ Configuration
+## Configuration
 
 ### RSS Feed Settings
 
@@ -191,7 +238,7 @@ DEFAULT_FILTERS = {
 
 Customize email appearance in `email_sender.py` - modify HTML templates and styling.
 
-## 📊 Features in Detail
+## Features in Detail
 
 ### 1. RSS Feed Processing
 - Fetches announcements from NSE RSS feed
@@ -231,13 +278,13 @@ Customize email appearance in `email_sender.py` - modify HTML templates and styl
 - **Automatic Cleanup**: Removes old data to prevent database bloat
 - **Error Recovery**: Handles database locks and corruption
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
 #### 1. Email Authentication Errors
 ```
-❌ Error: Authentication failed
+Error: Authentication failed
 ```
 
 **Solutions:**
@@ -248,7 +295,7 @@ Customize email appearance in `email_sender.py` - modify HTML templates and styl
 
 #### 2. RSS Feed Access Issues
 ```
-❌ Error: Failed to fetch RSS feed
+Error: Failed to fetch RSS feed
 ```
 
 **Solutions:**
@@ -259,7 +306,7 @@ Customize email appearance in `email_sender.py` - modify HTML templates and styl
 
 #### 3. Gemini API Errors
 ```
-❌ Error: Gemini API authentication failed
+Error: Gemini API authentication failed
 ```
 
 **Solutions:**
@@ -270,7 +317,7 @@ Customize email appearance in `email_sender.py` - modify HTML templates and styl
 
 #### 4. PDF Processing Issues
 ```
-⚠️ Failed to generate Gemini summary for PDF
+Failed to generate Gemini summary for PDF
 ```
 
 **Solutions:**
@@ -280,7 +327,7 @@ Customize email appearance in `email_sender.py` - modify HTML templates and styl
 
 #### 5. Database Errors
 ```
-❌ Database locked error
+Database locked error
 ```
 
 **Solutions:**
@@ -306,7 +353,7 @@ LOGGING_CONFIG = {
 }
 ```
 
-## 🔒 Security Considerations
+## Security Considerations
 
 1. **Environment Variables**: Never commit `.env` file to version control
 2. **App Passwords**: Use app-specific passwords instead of main passwords
@@ -314,7 +361,7 @@ LOGGING_CONFIG = {
 4. **Database**: Secure database files with appropriate permissions
 5. **Network**: Consider running behind a firewall for production use
 
-## 🚀 Production Deployment
+## Production Deployment
 
 ### Using systemd (Linux)
 
@@ -364,7 +411,7 @@ docker build -t rss-processor .
 docker run -d --env-file .env rss-processor
 ```
 
-## 📈 Performance Optimization
+## Performance Optimization
 
 ### Database Optimization
 - Regular cleanup of old articles
@@ -381,7 +428,7 @@ docker run -d --env-file .env rss-processor
 - Garbage collection for long-running processes
 - Memory monitoring and alerts
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/new-feature`)
@@ -389,11 +436,11 @@ docker run -d --env-file .env rss-processor
 4. Push to the branch (`git push origin feature/new-feature`)
 5. Create a Pull Request
 
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
+## Support
 
 For issues and questions:
 1. Check the troubleshooting section above
@@ -401,7 +448,7 @@ For issues and questions:
 3. Create an issue with detailed error information
 4. Include system information and configuration (excluding sensitive data)
 
-## 🔄 Changelog
+## Changelog
 
 ### Version 1.0.0
 - Initial release with core RSS processing
@@ -412,4 +459,4 @@ For issues and questions:
 
 ---
 
-**Made with ❤️ for automated financial news monitoring** 
+**Made for automated financial news monitoring** 
