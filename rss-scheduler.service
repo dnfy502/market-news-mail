@@ -1,0 +1,22 @@
+[Unit]
+Description=RSS Awards Processor Scheduler
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=%i
+WorkingDirectory=/home/dnfy/Desktop/Market%20News/email_system
+Environment=PATH=/home/dnfy/anaconda3/envs/market_env/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/home/dnfy/anaconda3/envs/market_env/bin/python scheduler.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Restart on system resume
+# This helps ensure the service restarts after system suspend/resume
+RestartForceExitStatus=1
+
+[Install]
+WantedBy=multi-user.target 

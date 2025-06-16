@@ -10,7 +10,8 @@ import logging
 import signal
 import sys
 import time
-from datetime import datetime
+import threading
+from datetime import datetime, timedelta
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.executors.pool import ThreadPoolExecutor
@@ -24,13 +25,16 @@ load_dotenv()
 from rss_awards_processor import process_rss_awards, get_email_config_from_env
 
 class RSSScheduler:
-    """Scheduler for RSS Awards Processor"""
+    """Scheduler for RSS Awards Processor with sleep/wake detection"""
     
     def __init__(self):
         self.setup_logging()
         self.scheduler = None
         self.email_config = None
         self.running = False
+        self.last_heartbeat = datetime.now()
+        self.heartbeat_thread = None
+        self.sleep_threshold = 300  # 5 minutes - if gap is longer, assume system was asleep
         
     def setup_logging(self):
         """Setup logging for the scheduler"""
@@ -53,10 +57,38 @@ class RSSScheduler:
             self.logger.error(f"❌ Configuration error: {e}")
             sys.exit(1)
     
+    def heartbeat_monitor(self):
+        """Monitor system heartbeat to detect sleep/wake cycles"""
+        while self.running:
+            try:
+                current_time = datetime.now()
+                time_gap = (current_time - self.last_heartbeat).total_seconds()
+                
+                # If the gap is larger than threshold, system likely was asleep
+                if time_gap > self.sleep_threshold:
+                    self.logger.warning(f"⚠️ System sleep detected! Gap: {time_gap:.1f}s")
+                    self.logger.info("🔄 Running catch-up job after wake-up...")
+                    
+                    # Run the processor immediately after wake-up
+                    try:
+                        self.run_processor()
+                    except Exception as e:
+                        self.logger.error(f"❌ Error in catch-up job: {e}")
+                
+                self.last_heartbeat = current_time
+                time.sleep(60)  # Check every minute
+                
+            except Exception as e:
+                self.logger.error(f"❌ Heartbeat monitor error: {e}")
+                time.sleep(60)
+    
     def run_processor(self):
         """Run the RSS awards processor with error handling"""
         job_start_time = datetime.now()
         self.logger.info("🔄 Starting scheduled RSS awards processing...")
+        
+        # Update heartbeat when job runs
+        self.last_heartbeat = job_start_time
         
         try:
             # Run the processor
@@ -94,6 +126,7 @@ class RSSScheduler:
         """Start the scheduler"""
         self.logger.info("🚀 Starting RSS Awards Processor Scheduler")
         self.logger.info("📅 Schedule: Every 15 minutes")
+        self.logger.info("💤 Sleep/wake detection: Enabled")
         
         # Load configuration
         self.load_config()
@@ -106,7 +139,7 @@ class RSSScheduler:
         job_defaults = {
             'coalesce': True,  # Combine multiple pending executions into one
             'max_instances': 1,  # Only one instance of the job can run at a time
-            'misfire_grace_time': 300  # 5 minutes grace time for missed jobs
+            'misfire_grace_time': 600  # 10 minutes grace time for missed jobs (increased)
         }
         
         self.scheduler = BlockingScheduler(
@@ -131,6 +164,12 @@ class RSSScheduler:
         try:
             self.running = True
             self.logger.info("✅ Scheduler started successfully")
+            
+            # Start heartbeat monitor in separate thread
+            self.heartbeat_thread = threading.Thread(target=self.heartbeat_monitor, daemon=True)
+            self.heartbeat_thread.start()
+            self.logger.info("💓 Heartbeat monitor started")
+            
             self.logger.info("🔄 Running initial check...")
             
             # Run once immediately on startup
@@ -152,8 +191,13 @@ class RSSScheduler:
         """Stop the scheduler gracefully"""
         if self.running and self.scheduler:
             self.logger.info("🛑 Stopping scheduler...")
-            self.scheduler.shutdown(wait=True)
             self.running = False
+            self.scheduler.shutdown(wait=True)
+            
+            # Wait for heartbeat thread to finish
+            if self.heartbeat_thread and self.heartbeat_thread.is_alive():
+                self.heartbeat_thread.join(timeout=5)
+                
             self.logger.info("✅ Scheduler stopped successfully")
     
     def _signal_handler(self, signum, frame):
@@ -169,7 +213,8 @@ class RSSScheduler:
             return {
                 'running': True,
                 'jobs_count': len(jobs),
-                'next_run': jobs[0].next_run_time if jobs else None
+                'next_run': jobs[0].next_run_time if jobs else None,
+                'last_heartbeat': self.last_heartbeat
             }
         return {'running': False}
 

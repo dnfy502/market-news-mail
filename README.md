@@ -43,6 +43,8 @@ graph TD
 - **Financial Context**: Uses Gemini with search grounding to find company revenue and order book data
 - **Email Alerts**: Sends formatted HTML email notifications with summaries and clickable links
 - **Duplicate Prevention**: Tracks processed articles to avoid repeat notifications
+- **Sleep/Wake Detection**: Automatically detects laptop sleep/wake cycles and runs catch-up jobs
+- **Background Processing**: Can run as a background service or system daemon
 - **Robust Error Handling**: Comprehensive logging and error recovery mechanisms
 - **Modular Architecture**: Clean, maintainable code with separate components
 
@@ -116,37 +118,105 @@ FINANCIAL_API_KEY=your-financial-api-key
 
 ## Usage
 
-### Quick Start (Recommended Approach)
+### Quick Start Options
 
-Once you've completed the installation and configuration, start the automated scheduler. This will run continuously and check for new announcements every 15 minutes:
+The system offers multiple deployment options to suit different needs. Choose the one that works best for your setup:
+
+#### Option 1: Interactive Mode (Simple Start)
+Run the scheduler in the foreground (you'll see all logs in real-time):
 
 ```bash
-python scheduler.py
+python manage_scheduler.py --interactive
 ```
 
-**What happens next:**
+#### Option 2: Background Process (Recommended for Laptops)
+Run the scheduler as a background process that survives terminal closure:
+
+```bash
+# Start in background
+python manage_scheduler.py --start
+
+# Check status anytime
+python manage_scheduler.py --status
+
+# Stop when needed
+python manage_scheduler.py --stop
+```
+
+#### Option 3: System Service (Most Robust)
+Install as a system service for automatic startup and restart:
+
+```bash
+# Setup the service
+python manage_scheduler.py --setup-service
+
+# Enable automatic startup
+sudo systemctl enable rss-scheduler@$USER
+
+# Start the service
+sudo systemctl start rss-scheduler@$USER
+
+# Check service status
+sudo systemctl status rss-scheduler@$USER
+```
+
+### Sleep/Wake Detection Feature
+
+The scheduler includes intelligent sleep/wake detection that automatically handles laptop suspend/resume scenarios:
+
+**How it works:**
+- Monitors system heartbeat every minute
+- Detects when system has been suspended (gap > 5 minutes)
+- Automatically runs catch-up jobs when system wakes up
+- Logs sleep detection events for transparency
+
+**Example log output:**
+```
+⚠️ System sleep detected! Gap: 12847.3s
+🔄 Running catch-up job after wake-up...
+✅ Processing completed successfully!
+   📊 New articles: 2
+   💰 Financial data: 1
+   📧 Email sent: Yes
+```
+
+**What happens during normal operation:**
 - The system immediately performs an initial check for new announcements
 - It then runs every 15 minutes automatically
 - When new awards/contracts are found, you'll receive email alerts within minutes
 - Each email contains AI-generated summaries with key details like order value, client, and timeline
+- If your laptop goes to sleep, the system automatically catches up when it wakes up
 
-Output example:
+**Sample startup output:**
 ```
 RSS Awards Processor Scheduler
 ==================================================
-Starting RSS Awards Processor Scheduler
-Schedule: Every 15 minutes
-Email configuration loaded successfully
-Running initial check...
-Scheduler is now running. Press Ctrl+C to stop.
+🚀 Starting RSS Awards Processor Scheduler
+📅 Schedule: Every 15 minutes
+💤 Sleep/wake detection: Enabled
+✅ Email configuration loaded successfully
+✅ Scheduler started successfully
+💓 Heartbeat monitor started
+🔄 Running initial check...
+⏰ Scheduler is now running. Press Ctrl+C to stop.
 ```
 
-### Manual Execution
+### Legacy Direct Execution
 
+You can still run the processor components directly for testing or one-time execution:
+
+#### Manual Execution
 Run the processor once manually:
 
 ```bash
 python rss_awards_processor.py
+```
+
+#### Direct Scheduler (Legacy)
+Run the basic scheduler without management features:
+
+```bash
+python scheduler.py
 ```
 
 ### Testing Components
@@ -162,6 +232,9 @@ python email_sender.py
 
 # Test PDF summarization
 python pdf_summarizer.py <pdf-url>
+
+# Test scheduler management
+python manage_scheduler.py --status
 ```
 
 ## Project Structure
@@ -173,7 +246,9 @@ email_system/
 ├── config.py                   # Configuration settings
 ├── .env                        # Environment variables (create this)
 │
-├── scheduler.py                # Main scheduler (entry point)
+├── manage_scheduler.py         # Scheduler management tool (recommended entry point)
+├── scheduler.py                # Enhanced scheduler with sleep/wake detection
+├── rss-scheduler.service       # Systemd service file for system integration
 ├── rss_awards_processor.py     # Core processing logic
 ├── rss_fetcher.py              # RSS feed fetching
 ├── filter_engine.py            # Article filtering logic
@@ -190,6 +265,10 @@ email_system/
 │   ├── financial_data_tool.py  # Stock data fetching
 │   └── gemini_test.py          # AI testing utilities
 │
+├── scheduler.log               # Main scheduler log file
+├── scheduler_bg.log            # Background process log file (when using --start)
+├── scheduler.pid               # Process ID file (when running in background)
+│
 └── __pycache__/               # Python cache (auto-generated)
 ```
 
@@ -202,13 +281,56 @@ You can customize the system by editing `config.py`:
 
 ## Troubleshooting
 
-**Common Issues:**
-- **Email errors**: Use app-specific passwords for Gmail, verify EMAIL_PROVIDER setting
-- **RSS feed issues**: Check internet connection, NSE feed may be temporarily down
-- **Gemini API errors**: Verify GEMINI_API_KEY in .env file, check API quota
-- **Database locked**: Stop all running instances, check file permissions
+### Common Issues
 
-Check log files (`scheduler.log`, console output) for detailed error information.
+**Email errors:**
+- Use app-specific passwords for Gmail, verify EMAIL_PROVIDER setting
+- Check firewall/network restrictions for SMTP ports
+
+**RSS feed issues:**
+- Check internet connection, NSE feed may be temporarily down
+- Verify RSS_CONFIG settings in config.py
+
+**Gemini API errors:**
+- Verify GEMINI_API_KEY in .env file, check API quota
+- Ensure API key has proper permissions for text generation
+
+**Database locked:**
+- Stop all running instances, check file permissions
+- Use `python manage_scheduler.py --stop` to properly stop background processes
+
+**Scheduler not running after laptop sleep:**
+- The new sleep/wake detection should handle this automatically
+- Check `scheduler.log` for sleep detection messages
+- If issues persist, try running as a system service instead
+
+**Background process issues:**
+- Check if PID file exists: `ls -la scheduler.pid`
+- View background logs: `tail -f scheduler_bg.log`
+- Force stop if needed: `python manage_scheduler.py --stop`
+
+### Log Files
+
+Check these log files for detailed error information:
+
+- `scheduler.log` - Main scheduler activities and errors
+- `scheduler_bg.log` - Background process logs (when using `--start`)
+- Console output - Real-time logs (when using `--interactive`)
+
+### Checking System Service Status
+
+If running as a system service:
+
+```bash
+# Check service status
+sudo systemctl status rss-scheduler@$USER
+
+# View service logs
+sudo journalctl -u rss-scheduler@$USER -f
+
+# Restart service
+sudo systemctl restart rss-scheduler@$USER
+```
 
 ## License
 
