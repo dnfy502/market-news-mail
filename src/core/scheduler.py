@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Import the RSS processor
-from rss_awards_processor import process_rss_awards, get_email_config_from_env
+from src.core.processor import process_rss_awards, get_email_config_from_env
 
 class RSSScheduler:
     """Scheduler for RSS Awards Processor with sleep/wake detection"""

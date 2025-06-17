@@ -6,8 +6,8 @@ from datetime import datetime
 from typing import List, Dict, Optional
 from urllib.parse import urlparse
 
-from config import RSS_CONFIG, SCHEDULER_CONFIG
-from database_manager import DatabaseManager
+from src.config.settings import RSS_CONFIG, SCHEDULER_CONFIG
+from src.data.database_manager import DatabaseManager
 
 class RSSFetcher:
     """Modular RSS feed fetcher with database storage"""

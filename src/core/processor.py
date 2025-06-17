@@ -18,14 +18,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Import existing modules
-from rss_fetcher import RSSFetcher
-from filter_engine import FilterEngine, PresetFilters
-from email_sender import EmailSender
-from hash_database_manager import HashDatabaseManager
+from src.data.rss_fetcher import RSSFetcher
+from src.core.filter_engine import FilterEngine, PresetFilters
+from src.communication.email_sender import EmailSender
+from src.data.hash_database_manager import HashDatabaseManager
 
 # Import financial data tool (optional)
 try:
-    from orderbook_numbers.financial_data_tool import FinancialDataTool
+    from src.ai.financial_data_tool import FinancialDataTool
     FINANCIAL_DATA_AVAILABLE = True
 except ImportError:
     FINANCIAL_DATA_AVAILABLE = False
@@ -34,7 +34,7 @@ except ImportError:
 try:
     from google import genai
     from google.genai import types
-    from pdf_text_extractor import pdf_url_to_text
+    from src.ai.pdf_text_extractor import pdf_url_to_text
     PDF_SUMMARIZATION_AVAILABLE = True
 except ImportError:
     PDF_SUMMARIZATION_AVAILABLE = False
@@ -234,7 +234,7 @@ class RSSAwardsProcessor:
                 self.logger.warning(f"RSS fetch completed with {fetch_stats['errors']} errors (likely duplicates)")
             
             # Get articles from RSS database (we'll filter against hash DB separately)
-            from database_manager import DatabaseManager
+            from src.data.database_manager import DatabaseManager
             db_manager = DatabaseManager()
             
             # Get recent articles (last few hours to ensure we catch everything)

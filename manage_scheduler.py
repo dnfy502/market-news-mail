@@ -17,7 +17,7 @@ from pathlib import Path
 
 def run_in_background():
     """Run the scheduler as a background process with nohup"""
-    cmd = ["nohup", "python", "scheduler.py"]
+    cmd = ["nohup", "python", "-m", "src.core.scheduler"]
     
     print("🚀 Starting RSS scheduler in background...")
     
@@ -132,7 +132,7 @@ def run_interactive():
     print("💡 This will run in the foreground. Press Ctrl+C to stop.")
     
     try:
-        from scheduler import main
+        from src.core.scheduler import main
         main()
     except KeyboardInterrupt:
         print("\n🛑 Scheduler stopped by user")

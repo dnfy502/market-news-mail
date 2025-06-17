@@ -33,7 +33,7 @@ import getpass
 try:
     from google import genai
     from google.genai import types
-    from pdf_text_extractor import pdf_url_to_text
+    from src.ai.pdf_text_extractor import pdf_url_to_text
     PDF_SUMMARIZATION_AVAILABLE = True
 except ImportError:
     PDF_SUMMARIZATION_AVAILABLE = False

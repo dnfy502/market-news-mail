@@ -46,7 +46,24 @@ graph TD
 - **Sleep/Wake Detection**: Automatically detects laptop sleep/wake cycles and runs catch-up jobs
 - **Background Processing**: Can run as a background service or system daemon
 - **Robust Error Handling**: Comprehensive logging and error recovery mechanisms
-- **Modular Architecture**: Clean, maintainable code with separate components
+- **Clean Architecture**: Well-organized codebase with separate modules for different concerns
+
+## Architecture Overview
+
+The codebase is organized into logical modules for better maintainability:
+
+- **`src/core/`** - Main processing logic, scheduling, and filtering
+- **`src/data/`** - Database operations, RSS fetching, and data persistence  
+- **`src/ai/`** - AI-powered features like PDF summarization and financial data
+- **`src/communication/`** - Email notifications and alerts
+- **`src/config/`** - Application settings and configuration
+- **`tests/`** - Testing utilities and validation tools
+
+This modular structure makes it easy to:
+- Understand what each part does
+- Modify individual components without affecting others
+- Add new features in the appropriate location
+- Test components independently
 
 ## Prerequisites
 
@@ -209,14 +226,14 @@ You can still run the processor components directly for testing or one-time exec
 Run the processor once manually:
 
 ```bash
-python rss_awards_processor.py
+python -m src.core.processor
 ```
 
 #### Direct Scheduler (Legacy)
 Run the basic scheduler without management features:
 
 ```bash
-python scheduler.py
+python -m src.core.scheduler
 ```
 
 ### Testing Components
@@ -225,13 +242,16 @@ Test individual components:
 
 ```bash
 # Test RSS fetching
-python rss_fetcher.py
+python -m src.data.rss_fetcher
 
-# Test email sending
-python email_sender.py
+# Test email sending  
+python -m src.communication.email_sender
 
 # Test PDF summarization
-python pdf_summarizer.py <pdf-url>
+python -m src.ai.pdf_summarizer <pdf-url>
+
+# Test AI functionality
+python -m tests.gemini_test
 
 # Test scheduler management
 python manage_scheduler.py --status
@@ -242,29 +262,43 @@ python manage_scheduler.py --status
 ```
 email_system/
 ├── README.md                    # This file
-├── requirements.txt             # Python dependencies
-├── config.py                   # Configuration settings
+├── requirements.txt             # Python dependencies  
 ├── .env                        # Environment variables (create this)
-│
-├── manage_scheduler.py         # Scheduler management tool (recommended entry point)
-├── scheduler.py                # Enhanced scheduler with sleep/wake detection
+├── manage_scheduler.py         # Scheduler management tool (main entry point)
 ├── rss-scheduler.service       # Systemd service file for system integration
-├── rss_awards_processor.py     # Core processing logic
-├── rss_fetcher.py              # RSS feed fetching
-├── filter_engine.py            # Article filtering logic
-├── email_sender.py             # Email sending functionality
-├── pdf_summarizer.py           # PDF text extraction and summarization
-├── pdf_text_extractor.py       # PDF text extraction utilities
-├── database_manager.py         # Main database operations
-├── hash_database_manager.py    # Duplicate tracking
 │
-├── data/                       # Database files
-│   └── rss_articles.db         # SQLite database
-├── logs/                       # Log files (auto-created)
-├── orderbook_numbers/          # Financial data tools
-│   ├── financial_data_tool.py  # Stock data fetching
+├── src/                        # All source code organized by functionality
+│   ├── __init__.py             # Package initialization
+│   ├── core/                   # Core processing logic
+│   │   ├── __init__.py
+│   │   ├── __main__.py         # Module entry point
+│   │   ├── scheduler.py        # Enhanced scheduler with sleep/wake detection  
+│   │   ├── processor.py        # Main RSS processing logic
+│   │   └── filter_engine.py    # Article filtering logic
+│   ├── data/                   # Data handling and persistence
+│   │   ├── __init__.py
+│   │   ├── rss_fetcher.py      # RSS feed fetching
+│   │   ├── database_manager.py # Main database operations
+│   │   └── hash_database_manager.py # Duplicate tracking
+│   ├── ai/                     # AI and document processing
+│   │   ├── __init__.py
+│   │   ├── pdf_summarizer.py   # PDF text extraction and summarization
+│   │   ├── pdf_text_extractor.py # PDF text extraction utilities
+│   │   └── financial_data_tool.py # Stock data fetching
+│   ├── communication/          # Email and notifications
+│   │   ├── __init__.py
+│   │   └── email_sender.py     # Email sending functionality
+│   └── config/                 # Configuration settings
+│       ├── __init__.py
+│       └── settings.py         # Application settings
+│
+├── tests/                      # Testing utilities
+│   ├── __init__.py
 │   └── gemini_test.py          # AI testing utilities
 │
+├── data/                       # Database files (auto-created)
+│   └── rss_articles.db         # SQLite database
+├── logs/                       # Log files (auto-created)
 ├── scheduler.log               # Main scheduler log file
 ├── scheduler_bg.log            # Background process log file (when using --start)
 ├── scheduler.pid               # Process ID file (when running in background)

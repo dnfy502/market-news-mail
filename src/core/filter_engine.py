@@ -134,10 +134,21 @@ class FilterEngine:
         if not results:
             return False
         
-        # Start with the first result
+        # For OR operations, we want to return True if ANY condition is True
+        # For AND operations, we want to return True only if ALL conditions are True
+        
+        # Check if all operators are OR - if so, return True if any result is True
+        operators = [op for _, op in results]
+        if all(op == FilterOperator.OR for op in operators):
+            return any(result for result, _ in results)
+        
+        # Check if all operators are AND - if so, return True only if all results are True
+        if all(op == FilterOperator.AND for op in operators):
+            return all(result for result, _ in results)
+        
+        # Mixed operators - evaluate sequentially (original logic)
         final_result = results[0][0]
         
-        # Process subsequent results with their operators
         for i in range(1, len(results)):
             result, operator = results[i]
             
@@ -200,55 +211,35 @@ class PresetFilters:
     @staticmethod
     def awards_bagging_filter() -> FilterRule:
         """Filter for awards and bagging announcements"""
+        keywords = [
+            "award", "bagging", "order", "contract", "won", "secured", 
+            "received order", "order received", "purchase order", "work order",
+            "LOI", "letter of intent", "tender", "bid", "project", "supply",
+            "agreement", "MOU", "memorandum", "appointed", "selected"
+        ]
+        
+        conditions = []
+        for keyword in keywords:
+            # Add condition for title
+            conditions.append(FilterCondition(
+                field="title",
+                value=keyword,
+                match_type=MatchType.CONTAINS,
+                case_sensitive=False,
+                operator=FilterOperator.OR
+            ))
+            # Add condition for summary  
+            conditions.append(FilterCondition(
+                field="summary",
+                value=keyword,
+                match_type=MatchType.CONTAINS,
+                case_sensitive=False,
+                operator=FilterOperator.OR
+            ))
+        
         return FilterRule(
             name="Awards/Bagging",
-            conditions=[
-                # Title conditions
-                FilterCondition(
-                    field="title",
-                    value="award",
-                    match_type=MatchType.CONTAINS,
-                    case_sensitive=False,
-                    operator=FilterOperator.OR
-                ),
-                FilterCondition(
-                    field="title",
-                    value="bagging",
-                    match_type=MatchType.CONTAINS,
-                    case_sensitive=False,
-                    operator=FilterOperator.OR
-                ),
-                # Summary conditions
-                FilterCondition(
-                    field="summary",
-                    value="award",
-                    match_type=MatchType.CONTAINS,
-                    case_sensitive=False,
-                    operator=FilterOperator.OR
-                ),
-                FilterCondition(
-                    field="summary",
-                    value="bagging",
-                    match_type=MatchType.CONTAINS,
-                    case_sensitive=False,
-                    operator=FilterOperator.OR
-                ),
-                # Link conditions
-                FilterCondition(
-                    field="link",
-                    value="award",
-                    match_type=MatchType.CONTAINS,
-                    case_sensitive=False,
-                    operator=FilterOperator.OR
-                ),
-                FilterCondition(
-                    field="link",
-                    value="bagging",
-                    match_type=MatchType.CONTAINS,
-                    case_sensitive=False,
-                    operator=FilterOperator.OR
-                )
-            ],
+            conditions=conditions,
             priority=5
         )
     

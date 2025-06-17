@@ -8,7 +8,7 @@ Type=simple
 User=%i
 WorkingDirectory=/home/dnfy/Desktop/Market%20News/email_system
 Environment=PATH=/home/dnfy/anaconda3/envs/market_env/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ExecStart=/home/dnfy/anaconda3/envs/market_env/bin/python scheduler.py
+ExecStart=/home/dnfy/anaconda3/envs/market_env/bin/python manage_scheduler.py --interactive
 Restart=always
 RestartSec=10
 StandardOutput=journal

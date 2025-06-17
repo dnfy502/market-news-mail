@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import json
 
-from config import DATABASE_PATH, DATA_DIR
+from src.config.settings import DATABASE_PATH, DATA_DIR
 
 @dataclass
 class Article:

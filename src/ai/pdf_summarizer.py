@@ -8,7 +8,7 @@ import os
 import sys
 from google import genai
 from google.genai import types
-from pdf_text_extractor import pdf_url_to_text
+from src.ai.pdf_text_extractor import pdf_url_to_text
 
 
 def summarize_text_with_gemini(text: str) -> str:
